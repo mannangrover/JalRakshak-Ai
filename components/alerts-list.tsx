@@ -2,47 +2,11 @@
 
 import { AlertTriangle, AlertCircle, Info } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-
-interface Alert {
-  id: string
-  title: string
-  description: string
-  severity: "critical" | "warning" | "info"
-  timestamp: string
-}
-
-const MOCK_ALERTS: Alert[] = [
-  {
-    id: "a1",
-    title: "Pressure Drop",
-    description: "West Commercial zone pressure below threshold",
-    severity: "critical",
-    timestamp: "2 min ago",
-  },
-  {
-    id: "a2",
-    title: "Maintenance Required",
-    description: "South Industrial zone valve service due",
-    severity: "warning",
-    timestamp: "15 min ago",
-  },
-  {
-    id: "a3",
-    title: "Temperature Alert",
-    description: "Water temperature elevated in Downtown zone",
-    severity: "warning",
-    timestamp: "32 min ago",
-  },
-  {
-    id: "a4",
-    title: "System Update",
-    description: "Scheduled maintenance completed successfully",
-    severity: "info",
-    timestamp: "1 hour ago",
-  },
-]
+import { useWardStore } from "@/lib/store"
 
 export function AlertsList() {
+  const { alerts } = useWardStore()
+
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case "critical":
@@ -75,18 +39,25 @@ export function AlertsList() {
         <CardTitle className="text-base">Active Alerts</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {MOCK_ALERTS.map((alert) => (
-          <div key={alert.id} className={`p-3 rounded-lg border ${getSeverityColor(alert.severity)}`}>
-            <div className="flex gap-3">
-              <div className="flex-shrink-0 mt-0.5">{getSeverityIcon(alert.severity)}</div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm">{alert.title}</p>
-                <p className="text-xs opacity-90 mt-1">{alert.description}</p>
-                <p className="text-xs opacity-70 mt-2">{alert.timestamp}</p>
+        {alerts.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">No active alerts</p>
+        ) : (
+          alerts.map((alert) => (
+            <div
+              key={alert.id}
+              className={`p-3 rounded-lg border animate-in slide-in-from-top-2 ${getSeverityColor(alert.severity)}`}
+            >
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 mt-0.5">{getSeverityIcon(alert.severity)}</div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm">{alert.wardName}</p>
+                  <p className="text-xs opacity-90 mt-1">{alert.message}</p>
+                  <p className="text-xs opacity-70 mt-2">{alert.timestamp.toLocaleTimeString()}</p>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </CardContent>
     </Card>
   )

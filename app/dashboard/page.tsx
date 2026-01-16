@@ -1,55 +1,55 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import dynamic from "next/dynamic"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Droplets, AlertTriangle, CheckCircle } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { NetworkMap } from "@/components/network-map"
 import { MetricsGrid } from "@/components/metrics-grid"
 import { AlertsList } from "@/components/alerts-list"
 import { SystemChart } from "@/components/system-chart"
+import { LiveControlPanel } from "@/components/live-control-panel"
+import { MiniSparkline } from "@/components/mini-sparkline"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { useWardStore } from "@/lib/store"
 
-interface Ward {
-  id: string
-  name: string
-  demand: number
-  supply: number
-  pressure: number
-  health: number
-}
-
-const MOCK_WARDS: Ward[] = [
-  { id: "w1", name: "North District", demand: 1200, supply: 1150, pressure: 4.2, health: 94 },
-  { id: "w2", name: "Central Hub", demand: 1800, supply: 1750, pressure: 4.8, health: 96 },
-  { id: "w3", name: "South Industrial", demand: 950, supply: 920, pressure: 3.8, health: 87 },
-  { id: "w4", name: "East Residential", demand: 750, supply: 720, pressure: 4.1, health: 91 },
-  { id: "w5", name: "West Commercial", demand: 650, supply: 600, pressure: 3.2, health: 78 },
-  { id: "w6", name: "Downtown", demand: 1400, supply: 1380, pressure: 4.5, health: 93 },
-]
+const DashboardMap = dynamic(
+  () => import("@/components/dashboard-map").then((mod) => ({ default: mod.DashboardMap })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-96 bg-muted rounded-lg flex items-center justify-center text-muted-foreground">
+        Loading map...
+      </div>
+    ),
+  },
+)
 
 export default function DashboardPage() {
   const [selectedZone, setSelectedZone] = useState<string | null>(null)
-  const [kpis, setKpis] = useState({
-    totalSupply: 8520,
-    nrwLoss: 7.8,
-    activeLeaks: 3,
-    wardHealth: 90,
-  })
+  const { wards, alerts, liveMode, leakProbability, initializeWards, updateWards } = useWardStore()
 
   useEffect(() => {
+    initializeWards()
+  }, [initializeWards])
+
+  useEffect(() => {
+    if (!liveMode) return
+
     const interval = setInterval(() => {
-      setKpis((prev) => ({
-        totalSupply: prev.totalSupply + Math.random() * 100 - 50,
-        nrwLoss: Math.max(5, prev.nrwLoss + (Math.random() - 0.5) * 2),
-        activeLeaks: Math.max(0, prev.activeLeaks + Math.floor(Math.random() * 3 - 1)),
-        wardHealth: Math.min(100, Math.max(70, prev.wardHealth + (Math.random() - 0.5) * 3)),
-      }))
-    }, 3000)
+      updateWards(leakProbability)
+    }, 2000)
+
     return () => clearInterval(interval)
-  }, [])
+  }, [liveMode, leakProbability, updateWards])
+
+  // Calculate KPIs from live data
+  const totalSupply = wards.reduce((sum, w) => sum + w.supply, 0)
+  const totalNrwLoss = (wards.reduce((sum, w) => sum + (w.nrwLossPercent * w.supply) / 100, 0) / totalSupply) * 100
+  const activeLeaks = alerts.filter((a) => a.severity === "critical").length
+  const avgHealthScore = Math.round(wards.reduce((sum, w) => sum + w.healthScore, 0) / wards.length)
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -59,7 +59,7 @@ export default function DashboardPage() {
           <p className="text-muted-foreground mt-2">Real-time monitoring of water distribution network</p>
         </div>
 
-        {/* KPI Cards */}
+        {/* KPI Cards - Live Updates */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="border-border bg-card">
             <CardHeader className="pb-3">
@@ -69,7 +69,7 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">{kpis.totalSupply.toFixed(0)} MLD</p>
+              <p className="text-2xl font-bold">{totalSupply.toFixed(0)} MLD</p>
             </CardContent>
           </Card>
 
@@ -81,7 +81,7 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-destructive">{kpis.nrwLoss.toFixed(1)}%</p>
+              <p className="text-2xl font-bold text-destructive">{totalNrwLoss.toFixed(1)}%</p>
             </CardContent>
           </Card>
 
@@ -93,7 +93,7 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-orange-500">{kpis.activeLeaks}</p>
+              <p className="text-2xl font-bold text-orange-500">{activeLeaks}</p>
             </CardContent>
           </Card>
 
@@ -105,7 +105,7 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">{kpis.wardHealth.toFixed(0)}%</p>
+              <p className="text-2xl font-bold">{avgHealthScore}%</p>
             </CardContent>
           </Card>
         </div>
@@ -121,7 +121,7 @@ export default function DashboardPage() {
                 <CardDescription>Real-time pipe network health and pressure zones</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                <NetworkMap selectedZone={selectedZone} onZoneSelect={setSelectedZone} />
+                <DashboardMap selectedWard={selectedZone} onWardSelect={setSelectedZone} />
               </CardContent>
             </Card>
 
@@ -129,17 +129,18 @@ export default function DashboardPage() {
             <MetricsGrid selectedZone={selectedZone} />
           </div>
 
-          {/* Right Column - Alerts */}
+          {/* Right Column - Alerts and Controls */}
           <div className="space-y-6">
             <AlertsList />
+            <LiveControlPanel />
           </div>
         </div>
 
-        {/* Ward Table */}
+        {/* Ward Table - Live Updates */}
         <Card className="border-border bg-card">
           <CardHeader>
             <CardTitle>Ward Performance</CardTitle>
-            <CardDescription>Demand, supply, pressure, and health metrics by ward</CardDescription>
+            <CardDescription>Live demand, supply, pressure, and health metrics by ward</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -147,26 +148,52 @@ export default function DashboardPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Ward</TableHead>
+                    <TableHead className="text-right">Pressure (bar)</TableHead>
+                    <TableHead className="text-right">Flow (L/s)</TableHead>
                     <TableHead className="text-right">Demand (MLD)</TableHead>
                     <TableHead className="text-right">Supply (MLD)</TableHead>
-                    <TableHead className="text-right">Pressure (bar)</TableHead>
+                    <TableHead className="text-right">NRW %</TableHead>
                     <TableHead className="text-right">Health</TableHead>
+                    <TableHead>Trend</TableHead>
                     <TableHead className="text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {MOCK_WARDS.map((ward) => (
-                    <TableRow key={ward.id}>
-                      <TableCell className="font-medium">{ward.name}</TableCell>
-                      <TableCell className="text-right">{ward.demand}</TableCell>
-                      <TableCell className="text-right">{ward.supply}</TableCell>
-                      <TableCell className="text-right">{ward.pressure.toFixed(1)}</TableCell>
+                  {wards.map((ward) => (
+                    <TableRow
+                      key={ward.id}
+                      className={
+                        ward.status === "critical"
+                          ? "bg-destructive/10"
+                          : ward.status === "warning"
+                            ? "bg-orange-500/10"
+                            : ""
+                      }
+                    >
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <span>{ward.name}</span>
+                          {ward.isHighPerforming && (
+                            <Badge className="bg-green-600 text-white text-xs">High Performing</Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">{ward.pressure.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">{ward.flow.toFixed(0)}</TableCell>
+                      <TableCell className="text-right">{ward.demand.toFixed(0)}</TableCell>
+                      <TableCell className="text-right">{ward.supply.toFixed(0)}</TableCell>
+                      <TableCell className="text-right">{ward.nrwLossPercent.toFixed(1)}%</TableCell>
                       <TableCell className="text-right">
                         <Badge
-                          variant={ward.health >= 90 ? "default" : ward.health >= 80 ? "secondary" : "destructive"}
+                          variant={
+                            ward.healthScore >= 90 ? "default" : ward.healthScore >= 80 ? "secondary" : "destructive"
+                          }
                         >
-                          {ward.health}%
+                          {ward.healthScore.toFixed(0)}%
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <MiniSparkline data={ward.trendData} />
                       </TableCell>
                       <TableCell className="text-center">
                         <Link href={`/dashboard/ward/${ward.id}`}>
@@ -186,8 +213,8 @@ export default function DashboardPage() {
         {/* System Chart */}
         <Card className="border-border bg-card">
           <CardHeader>
-            <CardTitle>System Performance (24h)</CardTitle>
-            <CardDescription>Flow rates and pressure distribution across network</CardDescription>
+            <CardTitle>Live Ward Performance</CardTitle>
+            <CardDescription>Real-time trends and historical performance patterns</CardDescription>
           </CardHeader>
           <CardContent>
             <SystemChart />

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import dynamic from "next/dynamic"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -16,6 +17,18 @@ import {
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+
+const CitizenLeakMap = dynamic(
+  () => import("@/components/citizen-leak-map").then((mod) => ({ default: mod.CitizenLeakMap })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-64 bg-muted rounded-lg flex items-center justify-center text-muted-foreground">
+        Loading map...
+      </div>
+    ),
+  },
+)
 
 interface Leak {
   id: string
@@ -43,6 +56,7 @@ export default function CitizenPortalPage() {
   const [reports, setReports] = useState<Leak[]>(MOCK_REPORTS)
   const [waterUsage] = useState(285) // liters
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null)
 
   const handleSubmitReport = () => {
     setIsSubmitting(true)
@@ -52,7 +66,9 @@ export default function CitizenPortalPage() {
         ...reports,
         {
           id: `l${reports.length + 1}`,
-          location: "New Location",
+          location: selectedLocation
+            ? `${selectedLocation.lat.toFixed(4)}, ${selectedLocation.lng.toFixed(4)}`
+            : "New Location",
           status: "reported",
           date: "just now",
         },
@@ -186,13 +202,23 @@ export default function CitizenPortalPage() {
               <DialogTrigger asChild>
                 <Button className="w-full">Report Leak</Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>Report Water Leak</DialogTitle>
-                  <DialogDescription>Provide details about the leak location and upload a photo</DialogDescription>
+                  <DialogDescription>Select leak location on map and provide details</DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Leak Location (Click on map)</Label>
+                    <CitizenLeakMap onLocationSelect={setSelectedLocation} selectedLocation={selectedLocation} />
+                    {selectedLocation && (
+                      <p className="text-xs text-muted-foreground">
+                        Selected: Lat {selectedLocation.lat.toFixed(4)}, Lng {selectedLocation.lng.toFixed(4)}
+                      </p>
+                    )}
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="location">Location Description</Label>
                     <Textarea id="location" placeholder="Where is the leak? (e.g., Main Street near corner)" />
