@@ -14,9 +14,9 @@ Deployment: We deployed and published the complete website on Vercel for fast, r
 
 Deployment
 
-Deployment: We published the complete website on Vercel for fast, reliable hosting and easy public access.
+  Deployment: We published the complete website on Vercel for fast, reliable hosting and easy public access.
 
-Here is the working published Link : https://v0-water-distribution-digital-twin.vercel.app/
+  Here is the working published Link : https://v0-water-distribution-digital-twin.vercel.app/
 
 
 
