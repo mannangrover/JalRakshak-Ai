@@ -1,30 +1,18 @@
-# Water distribution Digital Twin
+JalRakshak AI – Smart Water Distribution & Leakage Management (Digital Twin + DSS)
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+Urban water distribution in many Indian cities still runs on fixed schedules with limited real-time monitoring, leading to massive losses through leakages and non-revenue water (NRW).
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/mannangrover-8172s-projects/v0-water-distribution-digital-twin)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/dkKEnkvw3Xa)
+What we built:
+A Digital Twin + Decision Support System (DSS) that simulates and monitors ward-wise water supply to enable demand-based distribution and proactive leakage detection.
 
-## Overview
+Deployment: We deployed and published the complete website on Vercel for fast, reliable hosting and easy public access.
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
 
-## Deployment
+Deployment
 
-Your project is live at:
+Deployment: We published the complete website on Vercel for fast, reliable hosting and easy public access.
+Here is the working published Link : https://v0-water-distribution-digital-twin.vercel.app/
 
-**[https://vercel.com/mannangrover-8172s-projects/v0-water-distribution-digital-twin](https://vercel.com/mannangrover-8172s-projects/v0-water-distribution-digital-twin)**
 
-## Build your app
 
-Continue building your app on:
 
-**[https://v0.app/chat/dkKEnkvw3Xa](https://v0.app/chat/dkKEnkvw3Xa)**
-
-## How It Works
-
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
